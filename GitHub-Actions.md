@@ -558,3 +558,121 @@ CMD ["echo", "Hello from Docker Action"]
 - Publish to Marketplace if useful for others.
 
 ---
+
+Great question! Let’s clarify **where runners fit in GitHub Actions** and all the related terminologies.
+
+---
+
+### ✅ **What is a Runner?**
+- A **runner** is the **machine** that executes your workflow jobs.
+- It listens for jobs from GitHub Actions and runs them in its environment.
+
+---
+
+#### **Types of Runners**
+1. **GitHub-Hosted Runners**
+   - Provided by GitHub.
+   - Pre-configured with popular tools (Node, Python, Docker, etc.).
+   - OS options: `ubuntu-latest`, `windows-latest`, `macos-latest`.
+   - Free minutes included (limits depend on your plan).
+
+2. **Self-Hosted Runners**
+   - Your own machine or server.
+   - Useful for:
+     - Custom environments
+     - Private networks
+     - Heavy workloads
+   - You install the GitHub Actions runner software and register it.
+
+---
+
+### ✅ **Where Does It Run?**
+- If you use **GitHub-hosted runners**, jobs run on GitHub’s infrastructure.
+- If you use **self-hosted runners**, jobs run on your machine (on-prem or cloud).
+
+---
+
+### ✅ Key Terminologies in GitHub Actions
+- **Workflow**: A YAML file defining automation (in `.github/workflows/`).
+- **Job**: A set of steps that run on the same runner.
+- **Step**: A single task (command or action).
+- **Action**: Reusable logic (like Terraform modules).
+- **Runner**: The machine executing jobs.
+- **Trigger (Event)**: Defines when workflow runs (`on: push`, `pull_request`, etc.).
+- **Matrix**: Strategy to run jobs in multiple configurations.
+- **Secrets**: Encrypted values for sensitive data.
+- **Artifacts**: Files shared between jobs.
+- **Cache**: Stores dependencies for faster builds.
+
+---
+
+#### ✅ Example with Runner
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest  # GitHub-hosted runner
+    steps:
+      - uses: actions/checkout@v3
+      - run: echo "Running on GitHub-hosted runner"
+```
+
+For **self-hosted runner**:
+```yaml
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - run: echo "Running on my own machine"
+```
+
+---
+
+Here’s how you **set up a self-hosted runner step-by-step** and understand where it fits:
+
+---
+
+### ✅ **Step 1: Why Use a Self-Hosted Runner?**
+- You need **custom software** or dependencies not available on GitHub-hosted runners.
+- You want to run jobs inside a **private network** (e.g., deploy to internal servers).
+- You need **more control** over hardware resources.
+
+---
+
+### ✅ **Step 2: Where Will It Run?**
+- On **your machine**, **VM**, or **cloud instance** (Linux, Windows, macOS).
+- It will **listen for jobs** from GitHub and execute them locally.
+
+---
+
+### ✅ **Step 3: How to Configure a Self-Hosted Runner**
+1. **Go to your repository → Settings → Actions → Runners → Add Runner**.
+2. Choose **OS** (Linux, Windows, macOS).
+3. Download the runner package:
+   ```bash
+   curl -o actions-runner-linux-x64-<version>.tar.gz https://github.com/actions/runner/releases/latest
+   ```
+4. Extract and configure:
+   ```bash
+   tar xzf ./actions-runner-linux-x64-<version>.tar.gz
+   ./config.sh --url https://github.com/<owner>/<repo> --token <registration-token>
+   ```
+5. Start the runner:
+   ```bash
+   ./run.sh
+   ```
+   Or install as a service:
+   ```bash
+   sudo ./svc.sh install
+   sudo ./svc.sh start
+   ```
+
+---
+
+### ✅ **Step 4: Use It in Workflow**
+```yaml
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - run: echo "Running on my self-hosted runner"
+```
