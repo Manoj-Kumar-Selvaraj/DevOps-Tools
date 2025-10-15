@@ -296,3 +296,265 @@ jobs:
 ✅ So think of Actions as **workflow plugins**, just like Terraform modules are **infrastructure plugins**.
 
 ---
+
+### ✅ Topic 6: **Environment Variables & Secrets**
+
+Environment variables and secrets are essential for passing configuration and sensitive data into your workflows.
+
+---
+
+#### **Environment Variables**
+- Use `env:` to define variables at **workflow**, **job**, or **step** level.
+
+Example:
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+    steps:
+      - name: Print environment variable
+        run: echo "Environment is $NODE_ENV"
+```
+
+**Scope:**
+- Workflow level → available to all jobs.
+- Job level → available to steps in that job.
+- Step level → available only in that step.
+
+---
+
+#### **Secrets**
+- Secrets are **encrypted values** stored in your repo settings.
+- Common use: API keys, tokens, passwords.
+
+**How to add secrets:**
+1. Go to **Repo → Settings → Secrets and variables → Actions**.
+2. Add a new secret (e.g., `MY_SECRET`).
+
+**Usage in workflow:**
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use secret
+        run: echo "Secret is ${{ secrets.MY_SECRET }}"
+```
+
+---
+
+#### ✅ Best Practices
+- Never hardcode sensitive data in workflows.
+- Use **GitHub Secrets** for credentials.
+- Combine secrets with environment variables for flexibility.
+
+---
+
+### ✅ Topic 7: **Matrix Builds**
+
+Matrix builds allow you to **run the same job across multiple configurations**—like different OSes, languages, or versions—**in parallel**. This is super useful for testing compatibility.
+
+---
+
+#### **Why Use Matrix Builds?**
+- Test across multiple environments without writing separate jobs.
+- Saves time because jobs run **in parallel**.
+- Great for libraries or apps that support multiple versions.
+
+---
+
+#### ✅ Example: Node.js Matrix
+```yaml
+name: Node.js CI
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14, 16, 18]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - run: npm test
+```
+
+**What happens?**
+- GitHub creates **3 parallel jobs**:
+  - One with Node.js 14
+  - One with Node.js 16
+  - One with Node.js 18
+
+---
+
+#### ✅ Advanced Matrix Example
+You can combine multiple dimensions:
+```yaml
+strategy:
+  matrix:
+    os: [ubuntu-latest, windows-latest]
+    node-version: [16, 18]
+```
+This creates **4 jobs**:
+- Ubuntu + Node 16
+- Ubuntu + Node 18
+- Windows + Node 16
+- Windows + Node 18
+
+---
+
+#### ✅ Best Practices
+- Use matrix for **testing**, not for heavy deployments.
+- Limit combinations to avoid excessive runs.
+- Use `fail-fast: false` if you want all jobs to complete even if one fails.
+
+---
+### ✅ Topic 8: **Caching & Artifacts**
+
+Caching and artifacts help **speed up workflows** and **share data between jobs**.
+
+---
+
+#### **Caching**
+- Caching stores dependencies or build outputs to **avoid re-downloading** in future runs.
+- Common use: npm, pip, Maven dependencies.
+
+Example:
+```yaml
+steps:
+  - uses: actions/checkout@v3
+  - uses: actions/setup-node@v3
+    with:
+      node-version: '18'
+  - uses: actions/cache@v3
+    with:
+      path: ~/.npm
+      key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      restore-keys: |
+        ${{ runner.os }}-node-
+  - run: npm install
+```
+
+**Explanation:**
+- `path`: Directory to cache.
+- `key`: Unique key for cache (based on OS and lock file).
+- `restore-keys`: Fallback keys if exact match not found.
+
+---
+
+#### **Artifacts**
+- Artifacts allow you to **upload files** from one job and **download them in another**.
+- Useful for sharing build outputs, logs, or reports.
+
+Example:
+```yaml
+# Upload artifact
+- name: Upload build
+ /upload-artifact@v3
+  with:
+    name: build-output
+    path: dist/
+
+# Download artifact
+- name: Download build
+  uses: actions/download-artifact@v3
+  with:
+    name: build-output
+```
+
+---
+
+#### ✅ Best Practices
+- Use caching for **dependencies**, not for large binaries.
+- Use artifacts for **job-to-job communication**, not permanent storage.
+- Clean up unnecessary files before uploading artifacts.
+
+---
+### ✅ Topic 9: **Custom Actions**
+
+Custom actions let you create **your own reusable logic** for workflows. This is useful when:
+- You need functionality not available in Marketplace.
+- You want to share logic across multiple repositories.
+
+---
+
+#### **Types of Custom Actions**
+1. **JavaScript Actions**  
+   - Runs on Node.js.
+   - Great for lightweight tasks.
+2. **Docker Actions**  
+   - Runs inside a container.
+   - Best for complex dependencies.
+
+---
+
+#### ✅ Example: JavaScript Action
+Create a folder `my-action` with:
+- `action.yml` (metadata)
+- `index.js` (logic)
+
+**action.yml**
+```yaml
+name: "My Custom Action"
+description: "Prints a message"
+runs:
+  using: "node16"
+  main: "index.js"
+inputs:
+  message:
+    description: "Message to print"
+    required: true
+```
+
+**index.js**
+```javascript
+const core = require('@actions/core');
+try {
+  const message = core.getInput('message');
+  console.log(`Hello from custom action: ${message}`);
+} catch (error) {
+  core.setFailed(error.message);
+}
+```
+
+**Usage in workflow:**
+```yaml
+steps:
+  - uses: ./my-action
+    with:
+      message: "Custom action works!"
+```
+
+---
+
+#### ✅ Example: Docker Action
+**action.yml**
+```yaml
+name: "Docker Action"
+runs:
+  using: "docker"
+  image: "Dockerfile"
+```
+
+**Dockerfile**
+```dockerfile
+FROM alpine:latest
+RUN apk add --no-cache curl
+CMD ["echo", "Hello from Docker Action"]
+```
+
+---
+
+#### ✅ Best Practices
+- Keep actions **modular and reusable**.
+- Pin Node/Docker versions for stability.
+- Publish to Marketplace if useful for others.
+
+---
