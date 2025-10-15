@@ -7,7 +7,6 @@ GitHub Actions is a **CI/CD (Continuous Integration and Continuous Deployment)**
 - Running tests when you push code
 - Building and deploying applications
 - Automating repetitive tasks (e.g., labeling issues, sending notifications)
-
 #### ✅ Why use GitHub Actions?
 - **Integrated with GitHub**: No extra setup needed.
 - **Cross-platform**: Works on Linux, Windows, macOS.
